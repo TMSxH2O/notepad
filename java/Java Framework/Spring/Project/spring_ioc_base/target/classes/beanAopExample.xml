@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!-- 配置代理的Service -->
+    <bean id="accountService" class="com.tms.test.service.impl.AccountTransferWithoutService">
+        <property name="accountDao" ref="accountDao"/>
+    </bean>
+
+    <!-- 配置持久层Dao -->
+    <bean id="accountDao" class="com.tms.test.dao.impl.AccountTransferDao">
+        <property name="runner" ref="runner"/>
+        <property name="connectionUtils" ref="connection"/>
+    </bean>
+
+    <bean id="runner" class="org.apache.commons.dbutils.QueryRunner" scope="prototype">
+    </bean>
+
+    <!-- 配置TransactionManager -->
+    <bean id="manager" class="com.tms.test.utils.TransactionManager">
+        <property name="connectionUtils" ref="connection"/>
+    </bean>
+
+    <!-- 配置ConnectionUtils -->
+    <bean id="connection" class="com.tms.test.utils.ConnectionUtils">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!-- 配置数据源 -->
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="com.mysql.jdbc.Driver"/>
+        <property name="jdbcUrl" value="jdbc:mysql://localhost:3306/spring_test"/>
+        <property name="user" value="root"/>
+        <property name="password" value="root"/>
+    </bean>
+
+    <aop:config>
+        <aop:pointcut id="pointAccount"
+                      expression="execution(* com.tms.test.service.impl.AccountTransferWithoutService.*(..))"/>
+        <aop:aspect id="accountTransfer" ref="manager">
+            <aop:before method="beginTransaction" pointcut-ref="pointAccount"/>
+            <aop:after-returning method="commit" pointcut-ref="pointAccount"/>
+            <aop:after-throwing method="rollback" pointcut-ref="pointAccount"/>
+            <aop:after method="release" pointcut-ref="pointAccount"/>
+        </aop:aspect>
+    </aop:config>
+</beans>

@@ -1,0 +1,9 @@
+Java学习流程
+	1）JavaSE：环境搭建、基础语法、面对对象、数组、集合、常用API、IO流、反射机制、多线程、网络编程
+	2）数据库：mysql
+	3）前端：html、css、JavaScript（前端框架：Jquery和bootstrap）
+	4）后端：xml、mvc架构模式、servlet、filter、jsp、EL、JSTL、AJAX、代理模式、工厂模式、数据库连接池
+	5）项目管理：maven、git
+	6）框架：spring、springmvc、mybatis（struts2、hibernate）
+	7）市场需求：springboot
+	8）增强：Dubbo、Zookeeper、SpringCloud、MQ、Nginx、Redis、Linux、vue、多线程、设计模式、JVM优化、算法

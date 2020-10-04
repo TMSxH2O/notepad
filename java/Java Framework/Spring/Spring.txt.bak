@@ -1,0 +1,422 @@
+Spring框架的概述以及Spring中基于XML的IOC配置
+
+Spring中基于注解的IOC和IOC案例
+	spring中的ioc常用注解
+	案例使用xml方式和注解方式实现单表的CRUD操作
+		持久层：dbutils
+	改造基于注解的ioc案例，使用纯注解的方式实现
+		spring的一些新注解使用
+	spring和Junit整合
+
+Spring中的AOP和基于XML以及注解的AOP配置
+
+Spring中的JdbcTemplate以及Spring事务控制
+	回顾spring基于AOP事务控制
+	spring中的事务控制
+		基于xml的
+		基于注解的
+
+=============================================================
+@Spring的概论
+	spring是什么
+		Spring是一个分层的Java SE/EE应用full-stack轻量级开源框架，以'IOC（Inverse Of Control；反转控制）'和'AOP（Aspect Oriented Programming；面对切面编程）'为内核，提供了展现层Spring MVC和持久层Spring JDBC以及业务层事务管理等众多的企业级应用技术，还能整合开源世界众多著名的第三方框架和类库，逐渐成为实用最多的'Java EE企业应用开源框架'
+	spring的两大核心
+		'IoC（Inverse Of Control，反转控制）'
+			是Spring的一个容器，他不是一种技术，而是一种思想，依旧是基于面向对象编程的。它能指导我们怎么样设计出松耦合、更优良的程序。
+			简单来说，如果现在有两个（甚至更多）类，A类和B类，A类要引用B类中的某个方法，传统编程是在A类中实例化一个B类，也就是通过new，然后打点调方法，而我们知道，代码高耦合最大的原因就是用了new。利用Spring框架就将实例化的过程交给了IoC容器，通过配置文件中的设置Bean或者B类中添加注解，A类可以不能new通过ApplicationContext的getBean方法得到实例，然后打点调方法就可以了，减少了两个类之间的耦合度。
+
+			IoC三种注入方式：
+				1）接口注入（不推荐）
+				2）构造方法注入（死的应用）。时效性好，但是灵活性差。
+				3）赋值方式注入（常用）。时效性差，但是灵活性好，需要有set方法。
+			
+			所以，IoC容器包括了很多东西，但主要有以下六个组件：
+				1.资源组件：Resource，对资源文件的描述，不同资源文件如xml、properties文件等，格式不同，最终都将被ResourceLoader加载获得相应的Resource对象；
+				2.资源加载组件：ResourceLoader：加载xml、properties等各类格式文件，解析文件，并生成Resource对象。
+				3.Bean容器组件：BeanFactory体系：IoC容器的核心，其他组件都是为它工作的（但不是仅仅为其服务）.
+				4.Bean注册组件：SingletonBeanRegister/AliasRegister：将BeanDefinition对象注册到BeanFactory（BeanDefinition Map）中去。
+				5.Bean描述组件：BeanDefinition体系，Spring内部对Bean描述的基本数据结构
+				6.Bean构造组件：BeanDefinitionReader体系，读取Resource并将其数据转换成一个个BeanDefinition对象。
+				"引：https:  blog.csdn.net/jsj13263690918/article/details/79573075"
+
+		'AOP（Aspect Oriented Programming，面向切面/接口编程）'
+			是一种思想，而不是技术。和OOP（面向对象编程）相比较，AOP是对OOP的补充。OOP是静态的抽象，而AOP是动态的抽象。关于AOP的概念，简单来说就是将一个工程中与源代码无关，但是很多地方都要用，抽出来也不影响源代码上下文的那一部分代码抽出来，然后要用的时候就织入进去，进行使用，至于是在指定的代码之前使用还是之后又或者异常使用等，可以动态的进行。就好比你要结婚，婚礼的整个流程你可以自己负责，但是会耗费你的时间精力，这时候，你也可以选择将婚礼交给婚庆公司，你不再需要负责婚礼的具体筹备过程，只需要在婚礼当天使用婚庆公司给你的成果。所以说AOP是基于代理模式下进行的。
+
+			AOP的七个专业术语，为了理解，我们将整个AOP的专业属于比喻成在切片吐司上抹面包酱。
+			（1）目标对象（Target）：我们需要对他进行操作的业务类。
+				我们要抹面包酱，就需要一片吐司，那么这个吐司就是我们的目标对象。
+			（2）连接点(Joinpoint)：连接点就是程序执行的某个特定的位置。
+				有了吐司之后，要抹面包，我们要找到抹的位置。
+			（3）切点（Pointcut）：一个项目中有很多的类，一个类有很多个连接点，当我们需要在某个方法前插入一段	增强（advice）代码时，我们就需要使用切点信息来确定，要在哪些连接点上添加增强。
+				要抹面包酱，我们需要知道连接点，也就是抹的位置，一块吐司的面很大，哪里都能抹下去，但是我们不能瞎抹，要知道抹的位置的信息，根据这些信息找到位置
+			（4）增强（也有叫通知的）（Advice）：AOP（切面编程）是用来给某一类特殊的连接点，添加一些特殊的功能，那么我们添加的功能也就是增强。
+				抹面包，我们除了有吐司，还需要面包酱，增强就是这个面包酱
+			（5）切面(Aspect):是通知和切点的结合，通知和切点共同定义了切面的全部内容
+			（6）织入(Weaving):织入就是将增强添加到目标类具体连接点上的过程
+				将面包酱摸到吐司的抹个面上，就是织入
+			（7）AOP代理(AOP proxy)：一个类被AOP织入后生成出了一个结果类，它是融合了原类和增强逻辑的代理类
+				吐司抹好了的那一面以及没有抹的那几面，构成的新吐司就是AOP代理。
+
+	spring的优势
+		'方便解耦，简化开发'
+			通过Spring提供的IoC容器，可以将对象间的依赖关系由Spring进行控制，避免硬编码所造成的过度程序耦合。用户也不必再为单例模式类、属性文件解析等这些很底层的需求编写代码，可以更专注与上层的应用。
+		'AOP变成的支持'
+			通过Spring的AOP功能，方便进行面对切面的编程，许多不容易以传统OOP实现的功能可以通过AOP轻松应对。
+		'声明式事务的支持'
+			可以将我们从单调烦闷的事务管理代码中解脱出来，通过声明方式灵活的进行事务的管理，提高开发效率和质量。
+		'方便程序的调试'
+			可以用非容器的编程方式进行几乎所有的测试工作，测试不再是昂贵的操作，而是随手可以做的事
+		'方便计程各种优秀框架'
+			Spring可以降低各种框架的使用难度，提供对各种优秀框架（Struts、Hibernate、Hessian、Quartz等）的直接支持。
+		'降低JavaEE API的使用难度'
+			Spring对JavaEE API（如JDBC、JavaMail、远程调用等）进行了薄薄的封装层，使这些API的使用难度大大降低
+		'Java源码时经点学习范例'
+			Spring的源代码设计精妙、结构清晰、匠心独用，处处体现着大师对Java设计模式灵活运用以及对Java技术的高超造诣。它的源码无疑是Java技术的最佳实践的范例。 
+
+@程序的耦合及解耦
+	解耦的思路：
+		1）使用反射来创建对象，而避免使用new关键字
+		2）通过读取配置文件来获取要创建的对象全限定类名
+
+@Spring基础流程
+	1）获取核心容器对象
+		ApplicationContext ac = new ClassPathXmlApplicationContext("bean.xml");
+        ApplicationContext ac = new FileSystemXmlApplicationContext("F:\\JTMS\\Spring_Test_Base\\src\\main\\resources\\bean.xml");
+	2）根据id获取bean对象（两种方式）
+		IAccountService accountService = (IAccountService) ac.getBean("accountService");
+        IAccountDao accountDao = ac.getBean("accountDao", IAccountDao.class);
+
+	获取spring的ioc核心容器，并根据id获取对象
+		ClassPathApplicationContext：可以加载类配置路径下的配置文件，要求配置文件必须在类路劲下；否则，无法读取
+		FileSystemXmlApplicationContext：可以加载磁盘任意路径下的配置文件（必须有访问权限）
+		AnnotationConfigApplicationContext：用于读取注解创建容器的。
+
+	核心容器的两个接口引发的问题：
+		ApplicationContext（单例对象；是BeanFactory的子接口，功能更加齐全，使用更多）：
+			在构建核心容器时，创建对象采用的策略是采用立即加载的方式，也就是说，只要一读取完配置文件，马上就创建配置文件中配置的的对象
+		BeanFactory（多例对象）：
+			在构建核心容器时，创建对象采用的策略是采用延迟加载的方式，在使用对象时才会创建对象
+
+@设计模式——工厂模式
+	定义：
+		工厂方法模式定义了一个创建对象的接口，但由于子类决定要实例哪一个。工厂方法让类把实例化推迟到了子类。
+		工厂模式是一种创建模式，因为此模型提供了更好的方法来创建对象。在工厂模式中，我们创建对象而不将创建逻辑暴露给客户端。
+		工厂模式的目的是在于'程序的可拓展性'。
+		设计合理的工厂模式可以降低程序的耦合性。
+
+@Beans配置文件（beans.xml）
+	bean的三种配置方式
+		1）使用默认的构造函数创建
+			在Spring的配置文件中使用bean标签，配置id和class属性，且没有其他属性和标签时（使用最基础的标签和属性，就是第一种方式）
+			采用的就是默认构造函数创建bean对象，此时如果类中没有默认构造函数，则对象无法创建（无参构造函数），或者重构了带参数的构造函数之后也无法创建
+			<bean id="accountService" class="com.tms.test.service.impl.AccountServiceImpl"/>
+		2）使用普通工厂中的方法创建对象（使用某个类中的方法创建对象，并存入spring容器）
+			<bean id="instanceFactory" class="com.tms.test.factory.newInstanceFactory"/>
+			在面对某些已经封装的类中，没有默认构造方法，或者我们需要的是其中某个方法的返回值而非它本身时
+			<bean id="accountService" factory-bean="instanceFactory" factory-method="getAccountService"/>
+		3）使用工厂中的静态方法创建对象（使用某个类中的静态方法，并存入spring容器）
+			配置中，id直接设定最后返回的值或者说我们需要生成的类
+			<bean id="accountService" class="com.tms.test.factory.StaticFactory"								factory-method="getAccountService"/>
+
+	bean的作用范围（scope属性：用于指定bean作用范围）：
+        取值（常用singleton和prototype）
+            singleton：单例的（默认值）
+            prototype：多例的
+            request：作用于web应用的请求范围
+            session：作用于web应用的会话范围
+            global-session：作用于集群环境的会话范围（全局会话范围），当不是集群环境时等同于session
+	
+	bean对象的生命周期（单例和多例）
+		单例
+			'出生'：容器创建；'存活'：容器存在；'死亡'：容器销毁
+			总结：单例对象的生命周期和容器相同
+		多例
+			'出生'：使用对象时创建；'存活'：对象使用的过程中；'死亡'：对象长时间不使用且没有其他对象引用时，由java的垃圾回收器回收
+
+	依赖注入（Dependency Injection；DI）
+		简单理解：通过配置文件的方式，对类进行初始化。
+		（注入的位置都是在bean的设置中，也就是bean标签的内部标签）
+		1）构造函数的注入（注入的目标是构造函数）
+			constructor-arg内部标签：
+				type：用于指定注入的数据的数据类型，该数据类型也是构造函数中某个或者某些参数的类型
+				index：用于指定要注入的数据给构造函数中指定要索引位置的参数赋值，参数索引的位置是从0开始
+				name（常用）：用于指定给构造函数中指定名称的参数赋值
+				============ 三种方式指定参数 =================
+				value：用于给基本类型和String类型的数据
+				ref：用于指定其他的bean类型数据。指的是在Spring的ioc核心容器中出现过的bean对象。
+			例：
+				1）使用value对简单类型进行赋值
+					<constructor-arg name="name" value="test"/>
+				2）使用ref调用bean，对属性进行赋值
+					a)在创建一个bean，用于获取现在系统时间，返回类型为Date
+						<bean id="nowDate" class="java.util.Date"/>
+					b)调用刚才创建的bean，将它的值赋给这里的birthday
+						<constructor-arg name="birthday" ref="nowDate"/>
+
+		2）set方法注入（注入的目标是set方法）
+			property内部标签（只有name略有不同）:
+				name：用于指定注入时调用的set方法的名称（setAge -> age）
+			优势：创建对象没有明确的限制，可以直接使用默认构造函数
+			弊端：如果有成员必须非空时，set方法可能没有执行（无法体现必须存在的方式）
+		
+		复杂类型的注入/集合类型的注入
+			用于给List结构注入的标签（只有value）：
+				list，array，set
+			用于Map结构注入的标签（有key和对应的value）：
+				map，props
+			总结：结构相同的标签可以互换
+			'List类型'							|	'Map类型'
+			<property name="myList">			|	<property name="myMap">
+				<list>							|		<map>
+					<value>testList01</value>	|			<!-- 两种写法 -->
+					<value>testList02</value>	|			<entry key="A" value="testMap01"/>
+					<value>testList03</value>	|			<entry key="B"><value>testMap02</value>
+				</list>							|		</map>
+			</property>							|	</property>
+
+@使用注解的方式实现Bean配置
+	首先，告知spring在创建容器时，要扫描的包（用于扫描注解）
+        配置所需要的标签不是在bean的约束中，而是在一个名称为context名称的空间和约束中
+        注意：
+            注解方式和xml配置文件的方式，使用的头信息不同
+
+	（对应XML配置文件中的方法，可以看成四类）
+	1）用于创建对象的：
+       作用和xml配置文件中编写一个<bean>标签功能一致
+       @Component
+           用于把当前对象存入spring容器中
+           属性：
+               value：用于指定bean的id。默认值为当前类名，且首字母小写
+
+       @Controller     一般用于表现层
+       @Service        一般用于业务层
+       @Repository     一般用于持久层
+       以上三个注解的作用和属性与Component是一模一样的
+       他们三个是Spring框架为我们提供明确的三层使用的注解，使我们的三层对象更加清晰
+ 
+	2）用于注入数据的
+		作用和在xml配置中编写<property>标签的作用是一样的
+		@Autowired
+			自动按照类型注入，只要容器中有唯一的bean对象和要注入的变量类型匹配，就可以注入
+			[null] 没有任何一个bean类型和要注入的变量类型匹配，则报错
+			[found 2+]首先，比较IoC库中的key（id值），存在多个类型匹配，但其中某项与此时的变量名称对应，则依		然可以成功赋值；反之，其中没有任何一项能和此处的变量名对应时，报错
+                （还有一种可能性，比较key值时，就没有完全匹配，但是有类似如加一个数字，也能被识别成found 2，原因不明）
+            位置：
+                可以是变量上，也可以是方法上
+            注意：
+                在使用注入时，set方法就不是必须的了
+        @Qualifier （属性value：用于指定注入bean的id）
+            在按照类型注入的基础上，再按照名称注入
+            注：在给类成员注入时不能单独使用（要配合@Autowired使用），但是在给方法参数注入时可以
+        @Resource（name属性：用于指定bean的id）
+            按照bean的id注入（可以独立使用）
+        以上三个注入都只能注入其他bean类型的数据，而基本类型和String类型无法使用
+        另外，集合类型的注入，只能使用xml注入来实现
+ 
+        @Value（value属性：用于指定数据的值）
+            用于注入基本类型和String类型的数据
+            注意：其中value属性中，可以使用Spring中的SpEL（也就是Spring的el表达式）
+            （SpEL的写法：${表达式}）
+
+	3）用于改变作用范围的：
+		作用和在bean标签中使用scope标签功能一致
+        @Scope（value属性：指定范围的取值，singleton，prototype）
+            用于指定bean的作用范围
+  
+	4）改变生命周期的：
+        作用和在bean标签中使用init-method和destroy-method作用是一样的
+        @PreDestroy
+			用于指定销毁方法
+        @PostConstruct
+            用于指定初始化方法
+
+@Spring中的配置类（完全替代XML配置文件的作用）
+	用于解决 @使用注解的方式实现Bean配置 中无法解决问题的诸如：
+		设置扫描注解文件的范围
+		在封装好的jar（发布包）中，需要调用其他的类
+	
+	重要的标签：
+		@Configurable    用于指定当前类是一个配置类
+			当这个类作为AnnotationConfigApplicationContext对象创建的参数时，这个注解就可以省略（但不绝对）
+				特殊情况：当配置类没有直接作为对象传入，而是使用了扫描的方式读取，此时就无法省略
+					Spring扫描中，读取文件必须实在读取到了@Configurable标签的情况下才会对内容进行读取，因此必须使用标签
+				小细节：AnnotationConfigApplicationContext创建时可以一次传入多个类，使用逗号隔开即可（不是使用大括号）
+		@ComponentScan   通过注解的方式指定Spring创建容器时扫描的包（其中value和basePackages效果相同）
+			（此处的value必须是类路径，即classpath）
+			等同于配置文件中的   <context:component-scan base-package="com.tms.test"/>
+		@Bean        用于把当前方法的返回值作为bean对象，存入Spring的容器中
+			name属性：用于指定bean的id（默认值为当前方法的名称），存入Spring的IoC容器中
+			Spring在检查到方法带参数时，会现在容器中查找是否有bean对象匹配（唯一匹配，与之前的Autowired匹配机制一致），查找成功就可以直接注入
+		@Import(类名.class)    value属性（用于指定其他配置类的字节码）
+			用于导入其他的配置类。使用import的配置后，就会形成父子关系（使用import就是父类）
+		
+	配置类的读取：AnnotationConfigApplicationContext，将配置类的字节码作为配置参数
+
+@Spring整合junit的配置
+	前置知识：
+		1）应用程序的入口	main方法
+		2）junit单元测试中，没有main方法也能运行
+			是因为junit集成了一个main方法
+			该方法就会判断当前测试类中哪些方法有@Test注解
+			junit就会让有@Test的方法执行（整合到他main中执行）
+		3）junit不会管我们是否采用spring框架
+			在执行测试方法时，junit根本不知道我们是否使用了spring框架，所以也就不会为我们读取配置文件或配置创建spring的核心容器
+		总结：
+			当测试方法执行时，没有IoC容器，就算写了@Autowired注解，也无法实现注入
+
+	解决过程：
+		1）导入spring整合junit的jar坐标（maven）
+		2）使用junit提供的注解把所有的main方法替换了，替换成spring提供的
+			@RunWith(SpringJUnit4ClassRunner.class)
+		3）告知spring的运行器（spring和ioc的创建是基于xml还是注解的，并且说明位置
+			@ContextConfiguration 
+				location:	指定xml文件的位置，加上classpath关键字，表示在类路径下
+				classes:	指定注解类所在位置
+	
+	额外要求（版本）
+		spring 5.x版本，应该对应junit对应的jar必须是4.12及以上
+
+@AOP
+	定义
+		全称Aspect Oriented Programming，即面向切面编程。通过预编译方法方式和运行期动态代理方式实现程序功能的统一维护的一种技术。AOP是OOP的延续，是软件开发的一个热点，也是Spring框架中的一个重要内容，是函数式编程的一种衍生泛型。利用AOP可以对业务逻辑的各个部分进行隔离，从而使业务逻辑各个部分之间的耦合度降低，提高程序的可重用性，同时提高开发的效率。
+
+		总结：AOP将我们程序重复部分的代码提取出来，在需要执行的时候，使用动态代理的技术，在不修改源码的基础上，对我们的已有方法进行增强。
+	
+	作用：
+		在程序运行期间，不修改源码的情况下对已有方法进行增强
+		'应用动态代理的技术，因此作用和优势都和动态代理类似'
+
+	优势
+		1）减少重复代码
+		2）提高开发效率
+		3）维护方便
+
+	Spring中基于xml的aop配置（头信息关键字xmlns:aop）
+	 1）把通知的bean交给spring来管理
+	 2）使用'aop:config'标签表名开始AOP配置
+	 3）使用'aop:aspect'标签表示开始配置切面
+		id属性：给切面提供一个唯一标志
+		ref属性：指定通知类bean的id
+	 4）在aop:aspect标签的内部，使用对应的标签，来配置通知的类型
+		我们现在的实例是让printLog方法在接入点方法执行之前运行，所以是前置通知
+		aop:before：			前置通知，在切入点方法执行'之前'执行
+		aop:after-return：		后置通知，在切入点方法"正常"执行'之后'执行，'与异常通知不可同时出现'
+		aop:after-throwing：	异常通知，在切入点方法产生'异常之后'执行，'与后置方法不可能同时出现'
+		aop:after：				最终通知，无论切入点方法是否正确执行，都会在最后执行
+			method属性：指定Logger类中的目标方法，来作为前置通知
+			pointcut属性：用于指定切入点表达式，该表达式的含义是指定对业务层的那些方法增强
+				切入点表达式的写法：
+					关键字：execution（表达式）
+					表达式：
+						访问修饰符   返回值 包名.包名.包名……类名.方法名（参数列表）
+						execution(public void com.tms.test.service.impl.AccountServiceImpl.saveAccount())
+						访问修饰符可以省略execution(void com.tms.test.service.impl.AccountServiceImpl.saveAccount())
+						返回值可以用通配符，表示任意返回值execution(* com.tms.test.service.impl.AccountServiceImpl.saveAccount())
+						包名可以使用通配符表示任意包，但是有几级包就需要有几个*
+							execution(* *.*.*.*.*.AccountServiceImpl.saveAccount())
+							可以再使用..表示当前包和所有子包execution(* *..AccountServiceImpl.saveAccount())
+						类名和方法名都可以使用*实现统配execution(* *..AccountServiceImpl.*())
+						参数列表：
+							可以直接写数据类型
+								基本类型直接写名称           int
+								引用类型写包名，类名的方法    java.lang.String
+							可以使用通配符表示任意类型（但是必须存在参数）
+							可以使用..表示有无参数均可，参数是任意类型
+					全通配写法：
+						* *..*.*(..)
+					实际开发中通常写法
+						切到业务层实现类下的所有方法
+							* com.tms.test.service.impl.*.*(..)
+			<aop:pointcut>配置切面表达式，同时使用id进行标记
+				1）可以在aop:aspect中进行配置，但是只能就只能针对当前切面生效
+				2）可以在aop:config中，aop:aspect外配置，就可以针对所有的切面生效（注：必须在aop:aspect之前配		置，不然会有异常。是springmvc的配置约束/规范）
+	Spring中基于注解的aop配置（非完全使用注解，是同时使用配置文件和注解的方式）
+		1.基础配置（xml文件中）
+			1）修改头信息
+				头部信息中，添加三行（可以通过修改AOP的行得到）
+				xmlns:context="http://www.springframework.org/schema/context"
+				http://www.springframework.org/schema/context
+				http://www.springframework.org/schema/context/spring-context.xsd
+			2）配置扫描的包
+				<context:component-scan base-package="com.tms.test"/>
+			3)配置spring开启注解aop支持（只要写了就支持）
+			    <aop:aspectj-autoproxy/>
+		
+		2.开始正式进行注解配置
+			1）配置需要存入容器的类（与之前ioc配置相同）
+			2）配置切面
+				@Aspect 用来表示当前类是一个切面
+				
+				其中可以使用一个空方法，上添加标签 @Pointcut 配置切入点
+
+				分别使用@Before、@AfterReturning、@AfterThrowing、@After来表示方法是前置通知、后置通知、异常通知、最终通知
+				"注：目前的spring版本存在会先调用最终通知，再调用后置通知或异常通知的问题，解决的版本不明"
+				其中，还可以使用@Around来标注环绕通知
+
+				环绕通知，因为可以自行调用目标方法的时机，因此可以理解成为一个通过自行编写方法就能实现之前所有通知类型的通知方式，
+				同时，环绕通知的方法需要包含参数ProceedingJoinPoint（由Spring提供，应该和动态代理类似），用于获取方法参数和调用方法。返回值为Object。
+				"注"：此处的异常需要使用"Throwable"进行捕获，不然无法捕获成功
+		
+@JdbcTemplate
+	作用：
+		用于和数据库交互，实现对表的CRUD操作
+		类似common-dbutil，是在sun提供的jdbc标准上，添加了少量的封装
+
+=============================================================
+@耦合是什么？
+	耦合性（耦合度）
+		是对模块间关联程度的度量。耦合的强弱取决于模块间接口的复杂性、调用模块的方式以及通过界面传送数据的多少。模块间的耦合度是指模块之间的依赖关系，包括控制关系、调用关系、数据传输关系。模块间联系越多，其耦合性越强，同时表明其独立性越差（降低耦合性，可以提高独立性）。耦合性存在于各个领域，而非软件设计中独有的。
+		在软件工程中，耦合指的是对象之间的依赖性。对象之间的耦合越高，维护成本越高。因此对象的设计应使类和构件之间的耦合最小。软件设计中通常用耦合度和内聚度作为衡量模块独立程度的标准，划分模块的一个准则就是'高内聚低耦合'
+
+	耦合的分类：
+		1）内容耦合：
+			当一个模块直接修改或操作另一个模块的数据时，或一个模块不通过正常入口而转入另一个模块时，这样的耦合被称为'内容耦合'。内容耦合是最高程度的耦合，应该尽量避免。
+		2）公共耦合：
+			两个或两个以上的模块共同引用一个全局数据项，这样耦合被称为'公共耦合'。在具有大量公共耦合的结构中，确定究竟是哪个模块给全局变量赋了一个特定的值是十分困难的。
+		3）外部耦合：
+			一组模块都访问同一全局变量而不是同一全局数据结构，并且不是通过参数表传递该全局变量的信息，则称为'外部耦合'。
+		4）控制耦合：
+			一个模块通过接口向另一个模块传递一个控制信号，接收信息的模块根据信号值而进行适当的动作，这种耦合被称为'控制耦合'。
+		5）标记耦合：
+			若一个模块A通过接口向两个模块B和C传递一个公共参数，那么模块B和C之间存在一个'标记耦合'。
+		6）数据耦合：
+			模块之间通过参数来传递数据，那么被称为'数据耦合'，数据耦合是最低的一种耦合形式，系统中一般都存在这种类型的耦合，因为为了完成一些有意义的功能，往往需要将某些模块的输出数据作为另一些模块的输入数据。
+		7）非直接耦合：
+			两个模块直接没有直接关系，它们之间的联系完全是通过主模块的控制和调用来实现的
+	总结：
+		耦合是影响软件复杂程度的和设计质量的一个重要因素，在设计上我们应该采用以下规则：
+			'如果模型间必须存在耦合，就尽量使用数据耦合，少用控制耦合，限制公共耦合的范围，尽量避免使用内容耦合'
+		实际开发中，应该做到编译期不依赖，运行时才依赖。
+
+	内聚与耦合:
+		内聚标志一个模块内各个元素被彼此就和的紧密程度，它是信息隐蔽和局部化概念的自然扩展，内聚是从宫嗯那个角度来度量模块之间的联系，一个好的内聚模块应当恰好做一件事。它描述的是模块内的功能联系。耦合是软件结构中各模块之间项目连接的一种度量，耦合强度七绝与模块间接口的复杂程度、进入或访问一个模块的点以及通过接口的数量。程序讲究的是低耦合高内聚，就是同一个模块内的各个元素之间要高度紧密，但是各个模块之间的项目依存度却要不那么紧密。
+		内聚和耦合是密切相关的，同其他模块存在高耦合的模块意味着低内聚，而高内聚的模块意味着该模块同其它模块是低耦合。在进行软件设计是，应力争做到高内聚低耦合
+
+
+=============================================================
+"Spring小型知识点"
+@Bean的定义
+	Bean的中文含义是“豆子”，Bean的含义是'可重复使用'的'Java组件'。所谓'组件'就是一个由可以自行进行内部管理的一个或几个类所组成、外界不了解其内部信息和运行方式的'群体'，使用它的对象只能通过接口来操作。
+	
+	Bean并不需要继承特别的基类(BaseClass)或实现特定的接口(Interface)。Bean的编写规范使Bean的容器(Container)能够分析一个Java类文件，并将其"方法(Methods)翻译成属性(Properties)"，即把Java类作为一个Bean类使用。Bean的编写规范包括Bean类的构造方法、定义属性和访问方法编写规则。
+
+	Java Bean是基于Java的组件模型，由属性、方法和事件3部分组成。在该模型中，JavaBean可以被修改或与其他组件结合以生成新组件或完整的程序。它是一种Java类，通过封装成为具有某种功能或者处理某个业务的对象。因此，也可以通过嵌在JSP页面内的Java代码访问Bean及其属性。
+
+	Bean > 实体类
+
+@Spring的IoC容器结构
+	IoC容器主要作用就是创建并管理Bean对象以及Bean属性注入。
+	如何创建Bean对象？
+		是通过读取Bean配置文件生成相应对象。这些配置文件格式可能多种多样，xml、properties等格式，所以需要将其转换（ResourceLoader/Resolver）成统一资源对象（Resource），存储的位置也不一样，可能是ClassPath，可能是FileSystem，也可能是URL路径，路径的不一样，说明的是应用环境可能不一样。获得Resource对象，还要将其转换成（BeanDefinitionReader）Spring内部对Bean的描述对象（BeanDefinition），然后，将其注册（BeanRegister）到容器中（BeanFactory），供以后转换成Bean对象使用。
+	
+	理解后可知，IoC容器应该是使用的'Map结构'
+	其中，key为String，存放bean配置中的识别id；value为Object，存放具体类（类名和implement等信息）
+
+@Spring中的JdbcTemplate包（maven项目）
+	这两者一般一起使用
+	spring-jdbc：包含JdbcTemplate
+	spring-tx：spring提供的事务控制
+
+p53p54 动态代理两种方式
+
+p62

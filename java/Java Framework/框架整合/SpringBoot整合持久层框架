@@ -1,0 +1,37 @@
+# Spring Boot 与 MyBatis整合
+
+Spring Boot作为Spring官方对旗下的组件进行的大整合，所形成的大型框架，其中包含了各种JavaEE中规范的实现，而此处与MyBatis的整合同样也有官方的实现
+
+> 甚至在Spring Initializer中可以直接添加MyBatis框架
+
+## 整合步骤
+
+此处主要使用Spring Initializer创建项目的相关教程
+
+1. 使用Spring Initializer创建项目
+
+   其中，为了方便测试，选择了Spring Web模块
+
+   之后，需要选择SQL中的MySQL Driver和MyBatis Framework
+
+实际上通过这样的配置就已经将MyBatis整合到了Spring Boot中
+
+### 整合小结
+
+通过分析整合的过程，可以了解到如下的内容
+
+- 通过Spring Initializer中自动引入的pom映射，可以了解到，其中MyBatis与Spring Boot同样存在一个中间包，通过中间包实现了MyBatis与Spring Boot的整合
+
+  其中，导入的是`mybatis-spring-boot-starter`是来自MyBatis官方为其实现的整合包
+
+# Spring Boot与Spring Data JPA整合
+
+Spring Data JPA是与MyBatis方向不同的框架，在应对不同的业务逻辑时，可以进行使用
+
+### 使用步骤
+
+首先是使用Spring Initializer来构建项目的过程
+
+1. 在之前整合Spring Boot和MyBatis的基础上进行添加
+
+   额外选中Spring JDBC

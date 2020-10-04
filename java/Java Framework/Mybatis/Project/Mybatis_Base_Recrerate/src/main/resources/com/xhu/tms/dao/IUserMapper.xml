@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<mapper namespace="com.xhu.tms.dao.IUserDao">
+    <!-- 配置查询所有用户 -->
+    <select id="selectAll" resultType="com.xhu.tms.domain.User">
+        SELECT * FROM User
+    </select>
+    <!-- 配置查询用户 -->
+    <!-- id用于标记实例化的方法,resultType设置返回值类型 -->
+    <select id="FindAll" resultType="com.tms.test.domain.User">
+        <!-- SQL语句 -->
+        SELECT * FROM User
+    </select>
+
+    <!-- 保存用户 -->
+    <insert id="SaveUser" parameterType="com.tms.test.domain.User" >
+        <!-- 配置插入操作后，获取插入用户id -->
+        <!-- keyProperty对应parameterType中传入实体类的属性，
+        keyColumn对应数据库中的某一列，order表示执行在插入之前还是后
+        -->
+        <selectKey keyProperty="id" keyColumn="id" order="AFTER" resultType="java.lang.Integer">
+            select last_insert_id()
+        </selectKey>
+        INSERT into user(username, birthday, sex, address) values(#{username}, #{birthday}, #{sex}, #{address})
+    </insert>
+
+    <!-- 更新用户 -->
+    <update id="UpdateUser" parameterType="com.tms.test.domain.User">
+        update user set username=#{username}, birthday=#{birthday}
+        , sex=#{sex}, address=#{address} where id=#{id}
+    </update>
+
+    <!-- 删除用户 -->
+    <!-- 此处的parameterType使用int，Integer或者java.lang.Integer都是相同的效果 -->
+    <delete id="DeleteUser" parameterType="java.lang.Integer">
+        <!-- 此时的#{}中，因为传入的参数只有一个，所以并不会作为索引值，
+        就只相当于一个占位符，内容随意 -->
+        delete from user where id=#{id}
+    </delete>
+
+    <!-- 根据标签查询用户 -->
+    <select id="FindUserId" parameterType="java.lang.Integer" resultType="com.tms.test.domain.User">
+        select * from  user where id=#{id}
+    </select>
+
+    <!-- 根据名称，模糊查询用户信息 -->
+    <select id="FindUserByName" parameterType="java.lang.String" resultType="com.tms.test.domain.User">
+        <!-- 不能直接这里添加% -->
+        <!-- select * from user where username like #{username} -->
+        <!-- 使用$可以在引号中依然使用 -->
+        <!-- 相对的，使用了$符之后，里面必须填写value（规定） -->
+        select * from user where username like '%${value}%'
+    </select>
+
+    <!-- 获取总用户数 -->
+    <select id="FindTotal" resultType="int">
+        select count(id) from user
+    </select>
+
+    <!-- 根据QueryVO的条件查询用户 -->
+    <select id="FindUserByVO" parameterType="com.tms.test.domain.QueryVO" resultType="com.tms.test.domain.User">
+        <!-- 此时应该使用了OGNL表达式 -->
+        <!-- 先用user，是因为QueryVO中的属性user，然后再.username就是选择了User对象的属性username -->
+        select * from user where username like #{user.username}
+    </select>
+</mapper>

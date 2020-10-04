@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd">
+    <!-- 把对象的创建交给spring来管理 -->
+    <!--
+    spring对bean的管理细节
+        1.创建bean的管理方式
+        2.bean对象的作用范围
+        3.bean对象的生命周期
+     -->
+    <!-- 创建bean的三种方式 -->
+    <!--
+    第一种方式：使用默认的构造函数创建
+        在Spring的配置文件中使用bean标签，配置id和class属性，且没有其他属性和标签时（使用最基础的标签和属性，就是第一种方式）
+        采用的就是默认构造函数创建bean对象，此时如果类中没有默认构造函数，则对象无法创建（无参构造函数），或者重构了带参数的构造函数之后也无法创建
+     -->
+    <!--<bean id="accountService" class="com.tms.test.service.impl.AccountServiceImpl"/>-->
+    <!--第二种方式：使用普通工厂中的方法创建对象（使用某个类中的方法创建对象，并存入spring容器）-->
+    <!--<bean id="instanceFactory" class="com.tms.test.factory.newInstanceFactory"/>-->
+    <!--<bean id="accountService" factory-bean="instanceFactory" factory-method="getAccountService"/>-->
+    <!-- 第三种方式：使用工厂中的静态方法创建对象（使用某个类中的静态方法，并存入spring容器) -->
+    <!--<bean id="accountService" class="com.tms.test.factory.StaticFactory" factory-method="getAccountService"/>-->
+    <!--<bean id="accountDao" class="com.tms.test.dao.impl.AccountDaoImpl"/>-->
+    <!-- bean的作用范围调整
+        scope属性：用于指定bean作用范围
+        取值（常用singleton和prototype）：
+            singleton：单例的（默认值）
+            prototype：多例的
+            request：作用于web应用的请求范围
+            session：作用于web应用的会话范围
+            global-session：作用于集群环境的会话范围（全局会话范围），当不是集群环境时等同于session
+     -->
+    <!-- bean对象的生命周期
+        单例对象
+            出生：容器创建
+            活着：容器存在
+            死亡：容器销毁
+            总结：单例对象的生命周期和容器相同
+        多例对象
+            出生：当我们使用对象时创建
+            活着：对象使用过程中
+            死亡：当对象长时间不用且没有其他对象引用时，由java的垃圾回收器回收
+    -->
+    <!--<bean id="accountService" class="com.tms.test.service.impl.AccountServiceImpl"
+          scope="prototype" init-method="init" destroy-method="destroy"/>-->
+    <!-- spring中的依赖注入
+        依赖注入：
+            Dependency Injection
+        IoC的作用：
+            降低程序间的耦合（依赖关系）
+        依赖关系的管理：
+            以后都交给Spring来维护
+         在当前类需要用到其他类对象，由Spring为我们提供，我们只需要在配置文件中说明
+         依赖关系的维护，就被成为依赖注入
+         依赖注入：
+            根据可以注入的数据种类
+                1）基本类型和String
+                2）其他bean类型（在配置文件中或者注解配置过的bean）
+                3）复杂类型/集合类型
+            根据注入的方式
+                1）使用构造函数提供
+                2）使用set方式提供
+                3）使用注解提供
+    -->
+    <!--
+        constructor-arg内部标签：构造函数的注入
+            属性：
+                type：用于指定注入的数据的数据类型，该数据类型也是构造函数中某个或者某些参数的类型
+                index：用于指定要注入的数据给构造函数中指定要索引位置的参数赋值，参数索引的位置是从0开始
+                name（常用）：用于指定给构造函数中指定名称的参数赋值
+                ============ 三种方式指定参数 =================
+                value：用于给基本类型和String类型的数据
+                ref：用于指定其他的bean类型数据。指的是在Spring的ioc核心容器中出现过的bean对象。
+    -->
+    <!--<bean id="accountService" class="com.tms.test.service.impl.AccountServiceImpl">-->
+        <!--&lt;!&ndash;<constructor-arg type="java.lang.String" value="test"/>&ndash;&gt;-->
+        <!--<constructor-arg name="name" value="test"/>-->
+        <!--<constructor-arg name="age" value="18"/>-->
+        <!--&lt;!&ndash; Date的默认格式输入，否则无法成功注入 &ndash;&gt;-->
+        <!--&lt;!&ndash;<constructor-arg name="birthday" value="1999/08/06"/>&ndash;&gt;-->
+        <!--&lt;!&ndash; 直接调用下面声明的nowDate的bean &ndash;&gt;-->
+        <!--<constructor-arg name="birthday" ref="nowDate"/>-->
+    <!--</bean>-->
+
+    <!--&lt;!&ndash; 用来为上面的birthday生成一个能够使用Date数据 &ndash;&gt;-->
+    <!--<bean id="nowDate" class="java.util.Date"/>-->
+
+    <!-- set方法注入（更常用）
+        property内部标签（只有name略有不同）:
+            name：用于指定注入时调用的set方法的名称（setAge -> age）
+        优势：创建对象没有明确的限制，可以直接使用默认构造函数
+        弊端：如果有成员必须非空时，set方法可能没有执行（无法体现必须存在的方式）
+    -->
+    <!--<bean id="accountService1" class="com.tms.test.service.impl.AccountServiceImpl1">-->
+        <!--<property name="age" value="18"/>-->
+        <!--<property name="name" value="TestSet"/>-->
+        <!--<property name="birthday" ref="nowDate"/>-->
+    <!--</bean>-->
+
+    <!-- 复杂类型的注入/集合类型的注入 -->
+    <!--
+    用于给List结构注入的标签（只有value）：
+        list，array，set
+    用于Map结构注入的标签（有key和对应的value）：
+        map，props
+    结构相同的标签可以互换
+     -->
+    <!--<bean id="accountService2" class="com.tms.test.service.impl.AccountServiceImpl2">-->
+        <!--<property name="myStrs">-->
+            <!--<array>-->
+                <!--<value>testStr01</value>-->
+                <!--<value>testStr02</value>-->
+                <!--<value>testStr03</value>-->
+            <!--</array>-->
+        <!--</property>-->
+        <!--<property name="myList">-->
+            <!--<list>-->
+                <!--<value>testList01</value>-->
+                <!--<value>testList02</value>-->
+                <!--<value>testList03</value>-->
+            <!--</list>-->
+        <!--</property>-->
+        <!--<property name="mySet">-->
+            <!--<set>-->
+                <!--<value>test01</value>-->
+                <!--<value>test02</value>-->
+                <!--<value>test03</value>-->
+            <!--</set>-->
+        <!--</property>-->
+        <!--<property name="myMap">-->
+            <!--<map>-->
+                <!--&lt;!&ndash; 两种写法 &ndash;&gt;-->
+                <!--<entry key="A" value="testMap01"/>-->
+                <!--<entry key="B">-->
+                    <!--<value>testMap02</value>-->
+                <!--</entry>-->
+            <!--</map>-->
+        <!--</property>-->
+        <!--<property name="myProps">-->
+            <!--<props>-->
+                <!--<prop key="testProp1"/>-->
+                <!--<prop key="testProp2"/>-->
+            <!--</props>-->
+        <!--</property>-->
+    <!--</bean>-->
+    <bean id="accountService" class="com.tms.test.service.impl.AccountServiceImpl"/>
+</beans>

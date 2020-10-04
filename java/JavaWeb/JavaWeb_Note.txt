@@ -1,0 +1,19 @@
+@Tomcat结构
+	bin:存放运行文件(startup.bat shutdown.bat)
+	conf:配置文件/配置包(server.xml)
+	lib:tomcat运行所需的jar包/核心驱动包
+	logs:日志信息
+	temp:临时文件
+	webapps:所需运行的项目包/工程包
+	work:存放web项目转化期间会产生的其他文件(jsp>java>class)/缓存包
+
+@虚拟路径
+	用于解决web项目希望放在其他地方,而并不想放在webapps下的情况.(webapps也是采用虚拟路径,但是因为是tomcat默认的运行路径,因此不需要额外配置)
+	1)在server.xml中,<Host>标签内,有一个<Context>标签(严格区分大小写).
+		属性:
+			docBase属性: 映射的目标位置
+			path属性:	 虚拟路径(需要映射的网页地址)
+		例,path中配置'/text',docBase中配置F:\text(项目的位置).对应的转变就是在tomcat的localhost:3306/text运行时,就会区调用F:\text处的项目
+
+	2)在conf/Catalina/localhost中,配置一个'项目名.xml'文件
+		直接使用<Context>标签(与第一种方法具体的配置方法一致)

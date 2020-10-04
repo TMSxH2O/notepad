@@ -1,0 +1,494 @@
+Mybatis入门
+	Mybatis的概念
+		Mybatis是一个持久层框架，用java编写。
+		它封装了jdbc操作的很多细节，使开发者只需要关注sql语句本身，而无需关注注册驱动，创建连接等繁杂过程
+		它使用了ORM思想实现了结果集的封装。
+
+		Mybatis是一个优秀的基于Java的持久层框架，它内部封装了jdbc，是开发者只需要关注sql语句本身，而不需要花费精力去处理加载驱动、创建连接、创建Statement等复杂的过程。
+		Mybatis通过xml或注解的方式将要执行的各种Statement配置起来，并通过Java对象和Statement中sql的动态参数进行生成最终执行的sql语句，最后由Mybatis髋部国家执行sql并将结果映射为Java对象并返回。
+		采用ORM思想解决了实体和数据库映射的问题，对jdbc进行了封装，屏蔽了jdbc api底层访问细节，是我们不用与jdbc api打交道，就可以完成对数据库的持久化操作。
+
+	Mybatis的环境搭建
+		第一步：创建maven工程并导入坐标
+		第二步：创建实体类和dao的接口
+		第三步：创建Mybatis的主配置文件
+			SqlMapConfig.xml
+		第四步：创建映射配置文件
+			IUserMapper.xml
+
+		环境搭建的注意事项：
+			1)创建一个文件和与之对应的Mapper文件时,应该尽量使它大体相同,后面改成Mapper.xml
+				在Mybatis中,它把持久层的操作接口名称和映射文件叫做:Mapper
+			2)在idea中创建目录的时候,它和包是不一样的
+				包在创建的时候:com.xhu.tms.dao它是四级结构
+				目录在创建时:com.xhu.tms.dao是一级目录
+			3)Mybatis的映射配置文件必须和dao接口包结构相同
+				以本次为例,配置了IUserDao.java的配置文件IUserMapper.xml
+				IUserDao.java:		/java/com/xhu/tms/dao
+				IUserMapper.xml:	/resources/com/xhu/tms/dao
+			4)映射配置文件的mapper标签，namespace属性的取值，必须是dao接口的全限定类名
+			5)映射配置文件的操作配置，id属性的取值必须是dao接口的方法名
+			当我们遵从了3、4、5点之后，我们在开发中就无需再写dao的实现类
+
+	Mybatis入门案例
+		1）读取配置文件
+		2）创建SqlSessionFactory工厂
+		3）创建SqlSession
+		4）创建Dao接口的代理对象
+		5）执行dao中的方法
+		6）释放资源
+
+		注意事项：
+		不要忘记在映射配置中告知mybatis要封装到哪个实体类中
+		配置的方式：指定实体类的全限定类名
+
+    mybatis基于注解的入门案例：
+		把IUserDao.xml移除，在dao接口的方法上，使用@Select注解，并且指定SQL语句
+		同时需要在SqlMapConfig.xml中的Mapper配置时，使用class属性指定dao接口的全限定类名
+
+	自定义Mybatis框架（主要了解Mybatis中的执行细节）
+		Mybatis在使用代理dao的方式实现增删改查时做什么事呢？
+			1）创建代理对象
+			2）在代理对象中调用selectList
+		自定义Mybatis通过入门案例看到的类
+			class Rescouces
+			class SqlSessionFactoryBuilder
+			interface SqlSessionFactory
+			interface SqlSession
+
+Mybatis基本使用
+	Mybatis的单表crud操作
+		
+	Mybatis的参数和返回值
+
+	Mybatis的dao操作
+
+	Mybatis配置的细节（主配置文件；标签）
+		properties
+			配置properties信息
+			可以在标签内部配置连接数据库的信息
+			也可以使用属性，引用外部配置信息
+			resource属性：
+				指定配置文件的位置信息，是按照类路劲来写，并且必须存在类路径下，后面的配置连接数据库信息中，可以使用替换符${}
+				使用配置文件后，后面的${}也要和设置的标签中保持一致	
+
+		typeAliases
+			使用typeAliases用于配置别名，它能配置domain中类的别名
+			<typeAliases>
+				<!-- typeAlias用于配置别名，type属性指定的是实体类全限定类名。alias属性指定别名，当指定了别名就不再区分大小写 -->
+				<typeAlias type="com.tms.test.domain.User" alias="user"/>
+				<!-- package用于指定配置别名的包，当指定之后，该包下的实体类就都会被注册别名，并且类名就是别名，不再区分大小写 -->
+				<package name="com.tms.test.domain"/>
+				具体的作用体现在，以后的Mapper中，可以直接使用别名指代对应的实体类（比如，resultType直接设置为User等）
+			</typeAliases>
+
+		mappers
+			Mappers中，需要配置每个Mapper文件具体的路径或者某个使用Mybatis的注解的dao接口的路径
+			1.一次一个得配置每个mapper文件或实现类
+				1）resource
+					使用<mapper resource=""/>在resource标签中，标记目标mapper所在路径即可
+				2）class
+					使用<mapper class=""/>在class中dao文件的全限定类名
+				3）url
+					使用<mapper url=""/>在url中输入满足url格式的文件信息，这里最常用的是使用file:///（因为文件是本地数据，所以不需要host，也就没有端口信息，这种统一的写法标准叫做CURIE）后使用文件绝对路径（从某个磁盘的根目录开始）
+			2.直接指定dao文件所在的包
+				<package name=""/>直接指定所有dao文件所在的包
+
+Mybatis的深入和多表
+	Mybatis的连接池以及事务控制
+		Mybatis连接池使用及分析
+			1）UNPOOLED
+				不适用连接池的方式，直接创建一个连接
+			2）POOLED
+				使用连接池，从连接池中获取连接信息。（连接池中又分为空闲池和活动池，供线程使用）
+				情况一：新建线程 -> (判断)空闲池是否还有连接(T) -> 返回空闲连接
+				情况二：新建线程 -> (判断)空闲池是否还有连接(F) -> (判断)活动池是否已经打到最大数量(F) ->				新建一个连接供线程使用
+				情况三：新建线程 -> (判断)空闲池是否还有连接(F) -> (判断)活动池是否已经打到最大数量(T) ->				(判断)活动池中使用最长的连接或线程 -> 清理并返回连接
+
+		
+		Mybatis事务控制的分析
+			通过SqlSession对象的commit方法和rollback方法实现事务的提交和回滚
+
+	Mybatis基于XML配置的动态SQL语句使用
+		Mapper配置文件中的几个标签
+			<if>		判断，在test属性中设置条件即可（此处的判断语句需要按照SQL语句的编写方式）
+			<where>		自动添加where，避免自己手动添加
+			<foreach>	遍历操作，可以遍历一个集合内的所有内容（可以按照java的foreach操作理解，这里的大部分操				作其实都是字符串拼接）
+						collection属性	设置遍历的集合
+						open属性		设置遍历操作的开始
+						close属性		设置遍历操作的结束
+						separate属性	设置获取的每个值的间隔方法
+						item属性		设置获取的遍历值的名称
+						<foreach collection="ids" open="and id in(" close=")" separator="," item="id">
+			<sql>		给重复使用的SQL语句设置id，在后面需要时直接通过id调用
+						需要和<include>配套使用（调用的方法）
+
+	Mybatis的多表操作（重点）
+		一对一
+		一对多（多对一）
+			A可以对应多个B；多个B只能对应一个A
+			每个B只属于一个A
+			因此，Mybatis中按照这样的逻辑，将多对一的操作看成了一对一
+		多对多
+		一对多/多对一：
+			用户和账户（一个用户可以有多个账户，一个账户只能属于一个用户/多个用户可以属于一个用户）
+			步骤：	
+				1）建立两张表：用户表、账户表
+				2）建立两个实体类：用户实体类和账户实体类
+				3）让两张表之间具备一对多的关系：需要在账户表中设置外键
+				4）让两个实体类能体现出一对多的关系
+				5）建立两个配置文件：用户的配置文件和账户的配置文件
+				6）实现配置
+					当我们查询用户时，可以同时得到用户下所包含的账户信息
+					当我们查询账户时，可以同时得到账户的所属用户信息
+		多对多：
+			用户和角色（或身份）（一个用户可以有多个角色，一个角色也可以赋予多个用户）
+			步骤：与上方类似
+				1）建立两张表：用户表、角色表
+				2）建立两个实体类：用户实体类和角色实体类
+				3）让两张表之间具备多对多的关系：需要使用中间表，中间表包含各自的主键，在中间表中作为外键
+				4）让两个实体类能体现出多对多的关系，各自包含一个对方的集合引用
+				5）建立两个配置文件：用户的配置文件和角色的配置文件
+				6）实现配置
+					当我们查询用户时，可以同时得到用户下所包含的角色信息
+					当我们查询角色时，可以同时得到角色的所属用户信息
+
+Mybatis的缓存和注解开发
+	Mybatis中的延迟加载
+
+	Mybatis中的一级缓存和二级缓存
+		一级缓存：
+			Mybatis中SqlSession对象的缓存
+			执行查询的结果，会被存入SqlSession中的一个Map中。在需要使用时，Mybatis会先去SqlSession中查询是否有数据，如果有就能直接调用；否则才需要再次查询。SqlSession对象消失时，Mybatis的一级缓存也就消失了
+			当调用SqlSession的修改、添加、删除、commit、close等方法（数据更新操作），就会清空一级缓存
+		二级缓存：
+			Mybatis的SqlSessionFactory对象的缓存，由同一个SqlSessionFactory对象创建的SqlSession共享其缓存
+			二级缓存的使用步骤：
+				1）让Mybatis框架支持二级缓存（在出配置文件SqlMapConfig.xml中配置）
+				2）让当前的映射文件支持二级缓存（在具体的Mapper文件中配置）
+				3）让当前的操作支持二级缓存（在select标签中配置）
+			注：二级缓存中，存放的是数据，不是对象。因此，虽然数据完全一致，但是是重新创建了新的对象。
+		
+	Mybatis的注释开发
+		单表CRUD
+		多表查询
+---------------------------------------------------------
+Q：什么是框架？
+	它是我们软件开发中的一套解决方案，不同的框架解决的是不同的问题。
+	框架（Framework）是整个或部分系统的可重用设计，表现为一组抽象构件及构建实例间较胡的方法；另一种定义认为，框架是可被应用开发者定义的应用骨架。前者是从应用方面而后者是从目的方面给出的定义。
+	简而言之，框架其实就是某种应用的半成品，就是一组组件，控你选用完成你的系统。简单来说就是使用别人搭建好的舞台，你来做表演。而且，框架一般是成熟的，不断升级的软件。
+	使用框架的好处：
+		框架封装了很多的细节，是开发者可以使用极简的方式实现功能，大达提高开发效率。
+
+Q：三层架构
+	IE
+	表现层：用于展现数据的
+		Servlet：控制器存，封装数据；JSP：试图(Servlet -> JSP 域对象)
+	业务层：处理业务需求的
+		Service：业务逻辑处理；JavaBean：数据模型
+	持久层：与数据库交互的
+		DAO：数据访问层（Data Access Object）
+	DB
+	（MyBatis属于持久层框架）
+
+Q：持久层技术解决方案
+	JDBC技术：
+		Connection
+		PreparedStatement
+		ResultSet
+	Spring的JdbcTemplate：
+		Spring中队jdbc的简单封装
+	Apache的DBUtils：
+		它和Spring的JdbcTemplate很像，也是对Jdbc的简单封装
+  
+	以上这些都不是框架
+		JDBC是规范。Spring的JdbcTemplate和Apache的DBUtils都只是工具类
+		（只是对JDBC技术的简单封装，并没有一套完整的解决方案，没有满足框架的条件） 
+
+Q：什么是ORM
+	Object Relational Mapping 对象关系映射
+	简单来说，就是把数据库表和实体类的数据对应起来，让我们可以操作实体类就实现操作数据库表
+		错：
+		user		user
+		id			userId
+		username	userName
+		对：（要完全一致）
+		user		user
+		id			id
+		username	username
+
+Q：自定义Mybatis的分析：
+	Mybatis在使用代理dao方法实现增删改查是做了什么事呢？
+		1）创建代理对象
+		2）在代理对象中调用selectList
+
+Q：Mybatis如何解析配置文件(数据库信息、Mappers信息、Mapper映射信息)
+	用到的技术，就是解析XML的技术
+		此处用的就是dom4j解析xml技术
+	1）根据配置文件的信息创建Connection对象
+		注册驱动，获取连接
+	2）根据与处理对象PreparedStatement
+		此时需要SQL语句
+		con.preparedStatement(sql)
+	3）执行查询  
+		ResultSet rs = preparedStatement.executeQuery();
+	4）遍历结果集用于封装
+		List<E> list = new ArrayList();
+		while(rs.next()){
+			// 此处是通过了Mapper映射文件中的ResultType设定了具体的返回类型
+			E element = (E)Class.forName(配置的全限定类名).newInstance()
+			进行封装，把每个rs的内容都添加到element中
+			思路：
+				我们实体类属性和表中的列名是一致的
+				于是我们就可以把表的列名看成是实体类的属性名称
+			就可以使用反射的方式，来根据名称获取每个属性的值，并把值放进去
+			list.add(element) // 把element加入到list中
+		}
+	5）返回list
+		return list;
+  
+	要想让上述的方法执行，我们需要给方法提供两个信息：
+		1.连接信息（略，jdbc基础）
+		2.映射信息(Mapper)
+			1）执行的SQL语句
+			2）封装结果的实体类全限定类名
+			把这两个信息组合起来，定义成为一个对象
+			key：		namespace + id(namespace.id)
+			Mapper：	sql语句 + domainClassPath(对应映射的dao文件地址)
+
+Mybatis自定义的总结(自定义分析、环境搭建和完善基于注解的Mybatis)
+	1.SqlSessionFactoryBuilder接受SqlMapConfig.xml文件流，构建出SqlSessionFactory工厂对象
+	2.SqlSessionFactory对象读取SqlMapConfig.xml中连接数据库和mapper映射信息。用来生产真正操作数据库的		SqlSession对象
+	3.SqlSession对象有两大作用
+		1）生成代理对象
+		2）定义通用增删改查对象
+		ps.无论哪个分支，除了连接数据库信息，还需要得到sql语句
+	4.分为两种，使用代理和实现类
+		1）在SqlSessionImpl对象的getMapper方法中分两步来实现。（使用代理）
+			1]先用SqlSessionFactory读取的数据库连接信息创建Connection对象
+			2]通过jdk代理模式创建处代理对象作为getMapper方法返回值，这里主要工作实在创建代理对象时第三个参数处理类里面得到SQL语句。执行对应CRUD操作。
+		2）在SqlSessionImpl对象中提供selectList()方法（实际上Mybatis框架中还有selectOne，insert等方法），这些方法内分两步。（自己写实现类）
+			1]用SqlSessionFactory读取的数据库连接信息创建处jdbc的Connection对象
+			2]直接得到SQL语句，使用jdbc的Connection对象进行对应的CRUD操作
+	5.封装结果集：
+		无论使用上面的1）还是2）方法，我们都需要对返回的数据库结果集进行封装，变成java对象返回调用者。所以我们必须要知道调用者所需要的返回类型。
+	总结：无论是让Mybatis帮我们创建代理对象还是直接使用Mybatis提供的CRUD方法，其本质都是得到jdbc的Connection对象，执行对应的SQL语句，最终封装结果集。只是注解和xml配置文件两种开发模式在传递SQL语句和返回值类型的方式有所差异。
+
+Q：什么叫OGNL表达式？
+	Object Graphic Navigation Language（对象图导航语言）
+	它是通过对象的取值方法来获取数据，在写放上把get给省略了。
+	例：我们获取用户的名称
+		类中的写法：user.getUsername()
+		OGNL表达式写法：user.username
+	Mybatis中为什么可以直接写username，而不用user.呢？
+		因为再parameterType中已经提供了属性所属的类，所以此时必须要写对象名
+		如果没有使用parameterType，则需要使用OGNL表达式写法
+
+Q：当使用Mybatis时，实体类中的属性和数据库中的列名无法对应时，应该怎么做？
+	1.向数据库输入数据（insert、update等）：
+		并不会对操作造成实际的影响，只要传入的参数正确，就不会影响操作。
+	2.从数据库获取数据（select）：
+		因为无法对应，所以默认情况下Mybatis不能直接将返回值赋值给实现类中的属性，此时，两种操作
+			1）修改SQL语句，设置列映射
+			Select id as userId, username as userName from user；
+			2）在Mapper文件中，设置对应映射关系
+			<resultMap id="userMap" type="com.tms.test.domain.User">
+				<!-- 主键字段的对应 -->
+				<id property="userId" column="id"/>
+				<!-- 非主键字段的对应 -->
+				<result property="userName" column="username"/>
+			</resultMap>
+			相对的，下方的Mapper具体操作需要使用这样的对应关系，转而使用resultMap="userMap"
+			注：这样的使用会对性能产生影响
+	<resultMap>标签拓展：
+		用于表多对一/一对多的操作
+		使用<association>标签，可以设置一对一映射（可以将多对一转化为一对一操作）
+			属性：
+				property：对应resultMap设置的type实现类的某个属性（实现类为了显示这种关系，在属性中添加目标实			现类）
+				column：对应的数据库中的列（外键，需要和下面的id相对应）
+				javaType：表示返回的类，用来表示这个映射中的数据，需要包装到什么类中
+			内部标签：
+				id、result和resultMap的内部标签效果一致，但是用来代表映射的对象类，依然是和数据库表的列一致
+		使用<collection>标签，可以设置一对多映射
+			属性：
+				property：对应resultMap设置的实现类中的属性（用集合的方式接受映射类）
+				ofType：设置集合中的类名
+			内部标签：和resultMap一致
+			补充：一对多是的SQL语句
+				select u.*, a.ID as aid, a.UID, a.MONEY from user u left outer join account a on u.id = a.UID
+
+Q：什么是连接池？Mybatis的连接池是什么样的？
+	我们在实际开发中都会使用连接池。
+	连接池可以比作一个容器，里面有很多连接的方式，我们在使用时就将其取出使用。
+	容器其实就是一个集合对象，该集合必须是线程安全的，不能两个线程拿到同一个连接。
+	该集合还必须实现队列的特性：先进先出
+	我们之所以要使用连接池，因为它可以减少我们获取连接所消耗的时间。
+
+	Mybatis连接池提供了3种方式的配置
+		配置的位置：
+			主配置文件的SqlMapConfig.xml中的dataSource标签，type属性表示采用何种连接池方式
+		type属性的取值：
+			POOLED		采用传统的javax.sql.DataSource规范种的连接池，mybatis中有针对规范的实现
+			UNPOOLED	采用传统的获取连接方式，虽然也实现了javax.sql.DataSource接口，但是并没有使用池的思想
+			JNDI		采用服务器提供的JNDI技术实现，来获取DataSource对象，不同服务器所获取的DataSource是不				一样的
+						注：如果不是web或者maven的war工程，是不能使用的。
+						我们使用的是tomcat服务器，采用的连接池就是dbcp连接池
+
+Q：什么是事务？
+	概念：
+		是数据库操作的最小工作单元，是作为单个逻辑工作单元执行的一系列操作；这些操作作为一个整体一起向系统提交，要么什么都执行，要么都不执行；事务是一组不可再分割的操作集合（工作逻辑单元）
+
+	事务的四大特性(ACID)：
+		1）原子性(Atomicity)
+			事务是数据库的逻辑工作单位，食物中包含的各种操作要么都做，要么都不做
+		2）一致性(Consistency)
+			事务执行的结果必须是使数据库从一个一致状态转变到另一个一致状态。因此当数据库只包含成功事务提交的结果时，就说数据库处于一个一致性状态。如果数据库系统运行中发生故障，有些事务尚未完成就被迫中断，这些未完成的事务对数据库所做的修改有一部分已经写入物理数据库，这是数据库就处于一种不正确的状态，或者说是不一致的状态。
+		3）隔离性(Isolation)
+			一个事务的执行不能被其他事务干扰。即一个事务内部的操作及使用的数据对其他事务时隔离的，并发执行的各个事务之间也不能互相干扰。
+		4）持久性(Durability)
+			也称永久性，指一个事务一旦提交，它对数据库中的数据改变就应该是永久性的。接下来的其他操作或故障不应该对其操作的结果有任何的影响。
+		
+	如果事务不考虑隔离性会产生的3个问题
+		1）脏读：脏读是指在一个事务处理的过程中读取了另一个未提交的事务中的数据。后续的更改可能使本次将读取到			错误的信息
+		2）不可重复读：一个事务两次读取同一行数据，结果得到不同状态的结果，中间正好另一个事务更新了该数据，两			次结果相异，不可被信任。通俗来讲就是：事务T1再读取某一数据，而事务T2立马修改了这个数据并且提			交事务给数据库，事务T1再次读取该数据就得到了不同的结果，发生了不可重复读
+		3）幻读（虚读）：一个事务执行两次查询，第二次结果集包含第一次中没有或某些已经删除的数据，造成两次结果			不一致，只是另一个事务再这两次查询中间插入或删除了数据造成的。通俗来讲：假如事务T1对一个表中			的所有行的某个数据项做了从"1"修改到"2"的操作，这时事务T2有对这个表中插入了一行数据，而这个数			据项的值依然是"1"并且提交给了数据库。而操作事务T1的用户如果再看到刚刚修改的数据，会发现还有一			行没有修改，其实这行是从事务T2中添加的，就好像产生了幻觉一样，这就是发生了幻读
+
+	解决方法：四种隔离级别
+		1）Read Uncommitted（读取未提交内容）
+			一个事务可以读取另一个事务未提交事务的数据。但是，读未提交残生了脏读，采用读提交就可以解决脏读问题。
+		2）Read Committed（读取提交内容）
+			一个事务要等另一个事务提交后才能读取数据。读提交，若有事务对数据进行更新（update）操作时，读操作事务要等待这个更新操作事务提交后才能读取数据，可以解决脏读问题。但在这个事务中，出现了一个事务范围内两个相同的查询却返回了不同数据，这就是不可重复读，采用重复读可以解决。
+		3）Repeatable Read（重复读）
+			在开始读取数据（事务开始）时，不再允许修改操作。重复读可以解决不可重复读问题。应该明白的点就是，不可重复读对应的是修改（update）操作。但是还是有可能出现幻读问题。而为了解决幻读问题，就需要采用Serializable解决。
+		4）Serializable（可串行化）
+			可串行化是最高的事务隔离级别，在该级别下，事务串行顺序执行，可以避免脏读、不可重复读与幻读。但是这种事务隔离效率低下，十分消耗数据库性能，一般不使用。
+		注意：
+			1.大部分数据库默认的事务隔离级别是Read Committed，比如Sql server，Oracle。MySQL的默认隔离级别是	Repeatable read。
+			2.隔离级别的设置支队当前连接有效。对于使用MySQL命令窗口而言，一个窗口就相当于一个连接，当前窗口的设置隔离级别只对当前窗口的事务有效；对于JDBC操作数据库来说，一个Connection对象相当于一个链接，对于Connection对象设置的隔离级别只对该Connection对象有效，与其他链接Connection对象无关。
+			3.设置数据库的隔离级别一定是要在开启事务之前
+	
+Q：在一对多中，我们有一个用户，它有100个用户。在查询用户的时候，要不要把关联的账户查询出来？在查询账户的时候，要不要把关联的用户查询出来？（Mybatis的延迟加载）
+	思考：在查询用户时，用户的下的账户信息应该时什么时候使用？什么时候查询？
+		在查询账户时，账户所属的用户信息应该时随着账户查询时一起查询出来
+	
+	延迟加载（懒加载）：
+		在真正使用数据时才发起查询，不用的时候就不查询，按需加载
+	立即加载：
+		不管用不用，只要一调用方法，马上发起查询
+
+	对应的四种表关系中：
+		一对多，多对多：通常情况下，采用延迟加载
+		多对一，一对一：通常情况下，采用立即加载
+
+Q：什么时缓存？
+	减少和数据库的交互次数，提高执行效率。
+	什么数据应该使用缓存？
+		适用缓存：
+			1）经常查询并且不经常改变的
+			2）数据的正确是否对最终的结果影响不大的
+		不适用缓存：
+			1）经常改变的数据
+			2）数据的正确与否对最终结果影响很大的
+			例如：商品的库存，银行的汇率，股市的牌价
+
+---------------------------------------------------------
+文件读取路径：
+	绝对路径：d:/xxx/xxx.xml		绝对路径，如果文件出现移动，关联就会失败
+	相对路径：src/java/main/xxx.xml	相对路径，如果文件打包之后，其中的关联就会失效
+
+	因此，只有两种方式来表示文件的路径
+		1）使用类加载器，它只能读取类路径的配置文件
+		2）使用ServletContext对象的getRealPath()
+
+构建者模式：
+	SqlSessionFactory factory = builder.build(in);
+	创建工厂Mybatis使用了构建者模式
+	优势：把对象的创建细节隐藏，是使用者直接调用方法即可拿到对象
+
+工厂模式：
+	SqlSession session = factory.openSession();
+	生产者SqlSession使用了工厂模式
+	优势：解耦（降低了类之间的依赖关系）
+
+代理模式：
+	IUserDao userDao = session.getMapper(IUserDao.class);
+	创建Dao接口实现类使用了代理模式
+	优势：不修改源码的基础上对已有方法增强
+
+连接数据库信息：(Mybatis主配置文件)
+	1.configuration -> environments -> environment -> dataSource
+		配置连接数据库的基本信息
+		<property name="driver" value="com.mysql.jdbc.Driver"/>
+		<property name="url" value="jdbc:mysql://localhost:3306/eesy"/>
+		<property name="username" value="root"/>
+		<property name="password" value="root"/>
+		选择连接数据库信息，用来创建connection对象
+	2.configuration
+		配置properties信息
+		可以在标签内部配置连接数据库的信息
+		也可以使用属性，引用外部配置信息
+		resource属性：
+			指定配置文件的位置信息，是按照类路劲来写，并且必须存在类路径下，后面的配置连接数据库信息中，可以使用替换符${}
+			使用配置文件后，后面的${}也要和设置的标签中保持一致	
+
+配置Mappers信息：(Mybatis主配置文件)
+	<mappers>
+		<mapper resource="com/xhu/tms/dao/IUserMapper.xml"/>
+	</mappers>
+	影响映射配置信息
+
+配置Mapper映射信息：(具体的Mapper映射文件)
+	<mapper namespace="com.xhu.tms.dao.IUserDao">
+	<!-- 配置查询所有用户 -->
+	<select id="findAll" resultType="com.xhu.tms.domain.User">
+		SELECT * FROM User
+	</select>
+	</mapper>
+	用来创建具体执行的SQL语句，就可以获取PreparedStatement
+	同时，此配置中，还有封装的实体类全限定类名
+
+使用SqlSession创建Dao接口的代理对象
+ IUserDao userDao = session.getMapper(IUserDao.class);
+	public <T> getMapper(Class<T> daoInterfaceClass){
+		/*
+		  类加载器：它使用的和被代理对象是相同的加载器
+		  代理对象实现的接口：和被代理对象实现相同的接口
+
+		  如果代理：它就是增强的方法，我们需要自己来提供。
+			此处是一个InvocationHander接口，我们需要写一个该接口的实现类
+			在实现类中调用selectUser方法
+		*/
+	}
+
+Mapper替换符
+	1)#{}		
+		括号内，在参数不止一项的时候，为了具体表示某个值，需要使用指定的名称；相对的，只有一条数据的时候，就可以随意在括号中命名。
+			多：设置parameterType为某个实现类的时候，填入每个属性名（需要使用标准的get/set方法），
+			单：参数设置为某个具体的类型，如int，就可以随意命名
+			事实上，mybatis有提供方法解决命名问题，在方法调用的时候，可以使用@param()标签，在里面传入想要传入的替换符的名称即可
+		生成的SQL语句具体表现为，使用的是PreparedStatement
+		注：不能在括号中使用
+
+	2)${value}
+		与第一种类似，但是有规定，但是里面必须填入"value"。
+		生成的SQL语句具体表现为：拼接的SQL语句，直接使用Statement
+		注：可以在括号中使用
+
+Mapper配置文件中，替换重复出现的SQL语句
+	使用<sql>标签，对需要多次使用的SQL语句进行标记，其中的id=""属性对需要的SQL语句进行设置对应的ID
+	后面的调用时，使用<include refid=""/>输入SQL语句对应的id即可
+
+---------------------------------------------------------
+Mybatis小型知识点
+
+Mybatis中，涉及到数据数据库数据更新的操作，相比与查询操作，多一步提交事务
+	session.commit();
+	缺少这一步，数据库中的数据不会更新
+
+url属性：
+	要求按照url的写法来写配置文件的位置
+	URL（Uniform Resource Locator）：统一资源定位符，它是可以唯一标识一个资源的位置
+	写法：协议  主机  端口  URI
+		https://localhost:8080/mybatistest/domainServlet
+	URI（Uniform Resource Identifier）：统一资源标识符，它是在应用中可以唯一定位一个资源的位置
+	(文件协议file:///)

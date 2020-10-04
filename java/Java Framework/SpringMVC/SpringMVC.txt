@@ -1,0 +1,153 @@
+@SpringMVC环境的搭建
+	1）配置pom.xml（maven项目）
+		配置springmvc的环境依赖包
+			[spring-context]配置用于配置ioc容器（和spring中的配置相同）
+			[spring-web/spring-webmvc]springmvc的核心
+			servlet-api/jsp-api：用于配置servlet和jsp的api
+		[可以配置spring的版本锁定，在<properties>中添加常量，如<spring.version>5.0.2.RELEASE</spring.version>。]
+	2)配置核心控制器（配置DispatcherServlet）
+		1.在web.xml配置文件中核心控制器DispatcherServlet
+			<!-- 前端控制器 -->
+			<servlet>
+				<!--配置servlet识别名，需要与之后的servlet-mapping相对应-->
+				<servlet-name>dispatcherServlet</servlet-name>
+				<!--springmvc提供的前端控制器类-->
+				<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+				<!--配置初始值-->
+				<init-param>
+					<param-name>contextConfigLocation</param-name>
+					<!--配置读取配置文件的路径，存在默认写法，直接设置配置文件的名称（如，此处配置spring，则配置文件应该命名为spring-servlet.xml）-->
+					<param-value>classpath:SpringmvcConfig.xml</param-value>
+				</init-param>
+				<!--设置加载优先级（1~5整型，越小越优先）-->
+				<load-on-startup>1</load-on-startup>
+			</servlet>
+			<!--设置spring url拦截-->
+			<servlet-mapping>
+				<!--与上方的servlet-name相对应-->
+				<servlet-name>dispatcherServlet</servlet-name>
+				<!--表示某个路径下的请求拦截-->
+				<url-pattern>/</url-pattern>
+			</servlet-mapping>
+		2.配置字符编码过滤器
+			用于解决传递参数过程中的中文乱码（几乎是固定写法）
+			<filter>
+				<filter-name>encodingFilter</filter-name>
+				<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+				<init-param>
+				<param-name>encoding</param-name>
+				<param-value>UTF-8</param-value>
+				</init-param>
+				<init-param>
+				<param-name>forceEncoding</param-name>
+				<param-value>true</param-value>
+				</init-param>
+			</filter>
+
+			<filter-mapping>
+				<filter-name>encodingFilter</filter-name>
+				<url-pattern>*.do</url-pattern>
+			</filter-mapping>
+	
+	3)配置spring配置文件（其中包含spring ioc容器的配置，以及springmvc的其他配置
+		1.使用批注的方法（具体方式见spring）
+			1；在配置文件中添加头部信息
+			<?xml version="1.0" encoding="UTF-8"?>
+			<beans xmlns="http://www.springframework.org/schema/beans"
+				   xmlns:mvc="http://www.springframework.org/schema/mvc"
+				   xmlns:context="http://www.springframework.org/schema/context"
+				   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+				   xsi:schemaLocation="http://www.springframework.org/schema/beans
+						http://www.springframework.org/schema/beans/spring-beans.xsd
+						http://www.springframework.org/schema/mvc
+						http://www.springframework.org/schema/mvc/spring-mvc.xsd
+						http://www.springframework.org/schema/context
+						http://www.springframework.org/schema/context/spring-context.xsd">
+				<!-- 开启注解扫描 -->
+				<context:component-scan base-package="com.tms.test"/>
+				
+				<!--页面目录配置（方法转向的跳转）-->
+				<!-- 配置视图解析器  -->
+				<bean id="internalResourceView" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+					<!-- 配置跳转文件的目录 -->
+					<property name="prefix" value="/WEB-INF/pages/"/>
+					<!-- 配置文件的后缀名 -->
+					<property name="suffix" value=".jsp"/>
+				</bean>
+				
+				<!-- 开启对SpringMVC框架注解的支持 -->
+				<mvc:annotation-driven/>
+				
+				
+			</beans>
+			2；在具体的每个需要加入ioc容器中进行管理的类上，添加注释
+				@Controller
+				设置访问路径（可选）
+				@RequestMapping("/test")
+			
+			3；类的方法上添加注释（类上没有添加注释也可以直接对方法添加）
+				@RequestMapping([value=]"/hello")
+				如果类上注释，最后方法的路径就是两个路径的连接
+		
+		2.使用配置文件的方式（略，就是具体在配置文件中具体配置加入ioc容器的类，其他过程和注释方法相同）
+		<?xml version="1.0"encoding="UTF-8"?>
+		<beans xmlns="http://www.springframework.org/schema/beans"
+			   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			   xsi:schemaLocation="http://www.springframework.org/schema/beans
+					http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+		</beans>
+	
+	4)配置具体的类和方法中的注意
+		1）方法可以设置返回值
+			使用String，会根据String的值，通过视图解析器进行跳转。跳转目标是指定的某个文件（使用void和MeodelAndView效果类似，void中需要自己配置跳转的路径并且完成跳转过程；MeodelAndView实际上就是使用String会经过的具体处理，因此不如直接使用String）
+			返回对象（因为html接收数据为json，因此真正传递过去的值应该是json[jackson包实现]），直接返回对象，同时，在方法返回值之前添加注释@ResponseBody（方法参数中希望获取请求中的具体参数，@RequestBody）
+			
+	补充：
+		1.异常处理器（出现异常，跳转向异常的提示页面）
+			1)编写自定义异常类（做提示信息）
+				继承Exception类
+				添加成员属性
+					String message：存储提示信息
+				
+			2)编写异常处理器
+				实现HandlerExceptionResolver接口
+				实现的具体方法：
+				public MeodelAndView resolverException
+				参数：
+					HttpServletRequest:请求信息
+					HttpServletResponse；相应信息
+					Object Handler：当前处理器的对象（一般不用）
+					Exception：异常
+				
+			3)配置异常处理器(跳转向指定页面）[spring配置文件中]
+				将刚才的异常处理器添加到ioc容器中即可
+		
+		2.拦截器（页面调用controller中的方法，需要经过拦截器放行后才能使用)
+			1)编写拦截器类
+				实现HandlerInterceptor接口
+				实现方法（这个方法经过java8进行了增强，使用default）
+					boolean preHandler（预处理方法）
+						如果返回true，就会继续执行下一个拦截器，如果没有拦截器，就直接执行controller中的方法；如果返回false，就不不放行，可以通过配置参数中的request和response跳转到其他页面
+						
+					void postHandler（后处理方法）
+						在controller方法执行完毕之后，网页执行之前执行。
+					
+					void afterCompletion（最后执行的方法）
+						在页面执行之后执行。
+			2)配置拦截器[spring配置文件中]
+				<mvc:interceptors>
+					<!--配置需要拦截的方法-->
+					<!--这样的配置表示拦截/test下的所有请求（controller中具体的类配置的路径，根据这个进行拦截）都需要拦截；/**表示所有的路径的请求都需要拦截-->
+					<mvc:mapping path="/test/*" />
+					<!--配置不要拦截的方法（和上放内部标签需要配置一个）-->
+					<!--<mvc:exclude-mapping path="" />-->
+					<!--配置拦截器对象-->
+					<bean class="拦截器路径"/>
+				</mvc:interceptors>
+		
+==============================================
+@ModelAndView
+	addObject：存入信息
+	setViewName：配置视图信息（会交给视图解析器，转换成跳转的文件路径信息)
+			
+	
